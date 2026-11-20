@@ -331,25 +331,6 @@ function spinWheel() {
         isSpinning = false;
     }, duration);
 }
-    const fullTurns = 5 + Math.floor(Math.random() * 3);
-
-    currentRotation += fullTurns * 360 + delta;
-
-    const duration =
-        1500 + Math.random() * 1500;
-
-    wheel.style.transition =
-        `transform ${duration}ms cubic-bezier(.17,.67,.14,1)`;
-
-    wheel.style.transform =
-        `rotate(${currentRotation}deg)`;
-
-    setTimeout(() => {
-        winnerText.textContent = selectedName;
-        winnerDialog.showModal();
-        isSpinning = false;
-    }, duration);
-}
 
 wheel.addEventListener("click", spinWheel);
 
