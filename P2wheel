@@ -122,7 +122,7 @@ const ORIGINAL_NAMES = [
     "Ava"
 ];
 
-const STORAGE_KEY = "wheel_names_remaining";
+const STORAGE_KEY = "p2_names_remaining";
 
 let names = loadNames();
 let currentRotation = 0;
