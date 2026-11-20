@@ -203,13 +203,23 @@ function drawWheel() {
 
         ctx.translate(centerX, centerY);
         ctx.rotate(startAngle + sliceAngle / 2);
-
+        
+        let fontSize = radius * 0.12;
+        ctx.font = `bold ${fontSize}px Arial`;
+        
+        while (
+            ctx.measureText(names[i]).width > radius * 0.75 &&
+            fontSize > 12
+        ) {
+            fontSize--;
+            ctx.font = `bold ${fontSize}px Arial`;
+        }
+        
         ctx.fillStyle = "#000";
-        ctx.font = "28px Arial";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-        ctx.fillText(names[i], radius - 20, 0);
-
+        ctx.fillText(names[i], radius - 15, 0);
+        
         ctx.restore();
     }
 
