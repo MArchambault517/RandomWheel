@@ -129,6 +129,28 @@ let currentRotation = 0;
 let isSpinning = false;
 let selectedName = null;
 
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playClick() {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = 1200;
+
+    gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioCtx.currentTime + 0.03
+    );
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.03);
+}
+
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 const wheel = document.getElementById("wheel");
@@ -231,6 +253,7 @@ function drawWheel() {
 }
 
 function spinWheel() {
+
     if (isSpinning || names.length === 0) return;
 
     isSpinning = true;
@@ -259,6 +282,55 @@ function spinWheel() {
         delta += 360;
     }
 
+    const fullTurns = 5 + Math.floor(Math.random() * 3);
+
+    currentRotation += fullTurns * 360 + delta;
+
+    const duration =
+        1500 + Math.random() * 1500;
+
+    wheel.style.transition =
+        `transform ${duration}ms cubic-bezier(.17,.67,.14,1)`;
+
+    wheel.style.transform =
+        `rotate(${currentRotation}deg)`;
+
+    const startInterval = 25;
+    const endInterval = 300;
+    const startTime = performance.now();
+
+    function clickLoop(now) {
+
+        const progress =
+            Math.min((now - startTime) / duration, 1);
+
+        const interval =
+            startInterval +
+            (endInterval - startInterval) *
+            Math.pow(progress, 1.8);
+
+        if (
+            !clickLoop.lastClick ||
+            now - clickLoop.lastClick >= interval
+        ) {
+            playClick();
+            clickLoop.lastClick = now;
+        }
+
+        if (progress < 1) {
+            requestAnimationFrame(clickLoop);
+        }
+    }
+
+    clickLoop.lastClick = 0;
+    requestAnimationFrame(clickLoop);
+
+    setTimeout(() => {
+        winnerText.textContent = selectedName;
+        winnerDialog.showModal();
+        isSpinning = false;
+    }, duration);
+}
     const fullTurns = 5 + Math.floor(Math.random() * 3);
 
     currentRotation += fullTurns * 360 + delta;
