@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Period 7 Algebra II</title>
+
+<style>
+:root{
+    --wheel-size: min(75vmin, 650px);
+}
+
+body{
+    margin:0;
+    height:100vh;
+    overflow:hidden;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+
+    gap:1vh;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f4f4;
+}
+
+h1{
+    margin:0;
+    font-size:clamp(1.2rem, 3vmin, 2rem);
+}
+
+#wheel-container{
+    position:relative;
+    margin-top:30px;
+}
+
+#pointer{
+    position:absolute;
+    top:-10px;
+    left:50%;
+    transform:translateX(-50%);
+    width:0;
+    height:0;
+    border-left:22px solid transparent;
+    border-right:22px solid transparent;
+    border-top:40px solid #d62828;
+    z-index:10;
+}
+
+#wheel{
+    width:var(--wheel-size);
+    height:var(--wheel-size);
+    border-radius:50%;
+    border:8px solid #333;
+    cursor:pointer;
+    background:white;
+}
+
+.controls{
+    display:flex;
+    gap:10px;
+    margin-top:0.5vh;
+}
+
+button{
+    padding:10px 16px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+dialog{
+    border:none;
+    border-radius:12px;
+    padding:24px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+#empty-message{
+    font-size:24px;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<h1>Period 7 Algebra II</h1>
+
+<div id="wheel-container">
+    <div id="pointer"></div>
+    <canvas id="wheel" width="800" height="800"></canvas>
+</div>
+
+<div class="controls">
+    <button id="resetBtn">Reset</button>
+</div>
+
+<div id="empty-message" hidden>No names remaining.</div>
+
+<dialog id="winnerDialog">
+    <h2 id="winnerText"></h2>
+    <button id="removeWinnerBtn">Okay</button>
+</dialog>
+
+<script>
+const ORIGINAL_NAMES = [
+    "Brian",
+    "Kate",
+    "Poyraz",
+    "Harlow",
+    "Valerie",
+    "Kingsley",
+    "Jacob",
+    "Maiah",
+    "Amalia",
+    "Simar",
+    "Lereina",
+    "Olivia",
+    "Mason",
+    "Theodora",
+    "Anna M",
+    "Anna G",
+    "Juwon",
+    "Michael"
+];
+
+const STORAGE_KEY = "p7_names_remaining";
+
+let names = loadNames();
+let currentRotation = 0;
+let isSpinning = false;
+let selectedName = null;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playClick() {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = 1200;
+
+    gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioCtx.currentTime + 0.03
+    );
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.03);
+}
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const wheel = document.getElementById("wheel");
+
+const winnerDialog = document.getElementById("winnerDialog");
+const winnerText = document.getElementById("winnerText");
+const removeWinnerBtn = document.getElementById("removeWinnerBtn");
+const resetBtn = document.getElementById("resetBtn");
+const emptyMessage = document.getElementById("empty-message");
+
+function loadNames() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (!saved) {
+        return [...ORIGINAL_NAMES];
+    }
+
+    try {
+        return JSON.parse(saved);
+    } catch {
+        return [...ORIGINAL_NAMES];
+    }
+}
+
+function saveNames() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
+}
+
+function drawWheel() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (names.length === 0) {
+        emptyMessage.hidden = false;
+        return;
+    }
+
+    emptyMessage.hidden = true;
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(canvas.width, canvas.height) / 2;
+
+    const sliceAngle = (Math.PI * 2) / names.length;
+
+    const colors = [
+        "#ff595e",
+        "#ffca3a",
+        "#8ac926",
+        "#1982c4",
+        "#6a4c93",
+        "#f72585",
+        "#4cc9f0",
+        "#43aa8b"
+    ];
+
+    for (let i = 0; i < names.length; i++) {
+        const startAngle = i * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.save();
+
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        
+        let fontSize = radius * 0.12;
+        ctx.font = `bold ${fontSize}px Arial`;
+        
+        while (
+            ctx.measureText(names[i]).width > radius * 0.75 &&
+            fontSize > 12
+        ) {
+            fontSize--;
+            ctx.font = `bold ${fontSize}px Arial`;
+        }
+        
+        ctx.fillStyle = "#000";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillText(names[i], radius - 15, 0);
+        
+        ctx.restore();
+    }
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 25, 0, Math.PI * 2);
+    ctx.fillStyle = "#333";
+    ctx.fill();
+}
+
+function spinWheel() {
+
+    if (isSpinning || names.length === 0) return;
+
+    isSpinning = true;
+
+    const winnerIndex =
+        Math.floor(Math.random() * names.length);
+
+    selectedName = names[winnerIndex];
+
+    const sliceSize = 360 / names.length;
+
+    const targetAngle =
+        270 -
+        ((winnerIndex * sliceSize) + (sliceSize / 2));
+
+    const normalizedCurrent =
+        ((currentRotation % 360) + 360) % 360;
+
+    const normalizedTarget =
+        ((targetAngle % 360) + 360) % 360;
+
+    let delta =
+        normalizedTarget - normalizedCurrent;
+
+    if (delta < 0) {
+        delta += 360;
+    }
+
+    const fullTurns = 5 + Math.floor(Math.random() * 3);
+
+    currentRotation += fullTurns * 360 + delta;
+
+    const duration =
+        1500 + Math.random() * 1500;
+
+    wheel.style.transition =
+        `transform ${duration}ms cubic-bezier(.17,.67,.14,1)`;
+
+    wheel.style.transform =
+        `rotate(${currentRotation}deg)`;
+
+    const startInterval = 25;
+    const endInterval = 300;
+    const startTime = performance.now();
+
+    function clickLoop(now) {
+
+        const progress =
+            Math.min((now - startTime) / duration, 1);
+
+        const interval =
+            startInterval +
+            (endInterval - startInterval) *
+            Math.pow(progress, 1.8);
+
+        if (
+            !clickLoop.lastClick ||
+            now - clickLoop.lastClick >= interval
+        ) {
+            playClick();
+            clickLoop.lastClick = now;
+        }
+
+        if (progress < 1) {
+            requestAnimationFrame(clickLoop);
+        }
+    }
+
+    clickLoop.lastClick = 0;
+    requestAnimationFrame(clickLoop);
+
+    setTimeout(() => {
+        winnerText.textContent = selectedName;
+        winnerDialog.showModal();
+        isSpinning = false;
+    }, duration);
+}
+
+wheel.addEventListener("click", spinWheel);
+
+removeWinnerBtn.addEventListener("click", () => {
+    names = names.filter(name => name !== selectedName);
+
+    saveNames();
+    drawWheel();
+
+    winnerDialog.close();
+    selectedName = null;
+});
+
+resetBtn.addEventListener("click", () => {
+    if (!confirm("Reset all names?")) return;
+
+    names = [...ORIGINAL_NAMES];
+
+    saveNames();
+
+    currentRotation = 0;
+    wheel.style.transition = "none";
+    wheel.style.transform = "rotate(0deg)";
+
+    drawWheel();
+});
+
+drawWheel();
+</script>
+
+</body>
+</html>
