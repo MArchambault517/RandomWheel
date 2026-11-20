@@ -49,12 +49,17 @@ h1{
 }
 
 #wheel{
-    width:var(--wheel-size);
-    height:var(--wheel-size);
-    border-radius:50%;
-    border:8px solid #333;
-    cursor:pointer;
-    background:white;
+ width:var(--wheel-size);
+ height:var(--wheel-size);
+ border-radius:50%;
+ border:8px solid #333;
+ cursor:pointer;
+ background:white;
+
+ display:block;
+ backface-visibility:hidden;
+ transform:translateZ(0);
+ will-change:transform;
 }
 
 .controls{
