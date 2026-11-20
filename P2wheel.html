@@ -3,27 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Name Wheel</title>
+<title>Period 2 Algebra II</title>
 
 <style>
 :root{
-    --wheel-size: 650px;
+    --wheel-size: min(75vmin, 650px);
 }
 
 body{
     margin:0;
-    min-height:100vh;
+    height:100vh;
+    overflow:hidden;
+
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:20px;
+
+    gap:1vh;
     font-family:Arial, Helvetica, sans-serif;
     background:#f4f4f4;
 }
 
 h1{
     margin:0;
+    font-size:clamp(1.2rem, 3vmin, 2rem);
 }
 
 #wheel-container{
@@ -55,6 +59,7 @@ h1{
 .controls{
     display:flex;
     gap:10px;
+    margin-top:0.5vh;
 }
 
 button{
@@ -83,7 +88,7 @@ dialog{
 
 <div id="wheel-container">
     <div id="pointer"></div>
-    <canvas id="wheel" width="650" height="650"></canvas>
+    <canvas id="wheel" width="800" height="800"></canvas>
 </div>
 
 <div class="controls">
@@ -163,7 +168,7 @@ function drawWheel() {
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = canvas.width / 2;
+    const radius = Math.min(canvas.width, canvas.height) / 2;
 
     const sliceAngle = (Math.PI * 2) / names.length;
 
